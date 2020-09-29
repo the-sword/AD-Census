@@ -23,6 +23,7 @@ void ShowDisparityMap(const float32* disp_map, const sint32& width, const sint32
 /*保存视差图*/
 void SaveDisparityMap(const float32* disp_map, const sint32& width, const sint32& height, const std::string& path);
 void SaveDisparityMap16(const float32* disp_map, const sint32& width, const sint32& height, const std::string& path);
+void SaveDisparityMap32to16(const float32* disp_map, const sint32& width, const sint32& height, const std::string& path);
 /*保存视差点云*/
 void SaveDisparityCloud(const uint8* img_bytes, const float32* disp_map, const sint32& width, const sint32& height, const std::string& path);
 
@@ -44,8 +45,8 @@ int main(int argv, char** argc)
     printf("Image Loading...");
     //···············································································//
     // 读取影像
-    std::string path_left = "/home/em/workspace/code/AD-Census/AD-Census/build/rgbImageLL.png";
-    std::string path_right = "/home/em/workspace/code/AD-Census/AD-Census/build/rgbImageLR.png";
+    std::string path_left = "/home/em/workspace/datasets/waikuo/0927/veh-2020-09-27-16-59-09-383/rgbImageRL.png";
+    std::string path_right = "/home/em/workspace/datasets/waikuo/0927/veh-2020-09-27-16-59-09-383/rgbImageRR.png";
 
     cv::Mat img_left = cv::imread(path_left, cv::IMREAD_COLOR);
     cv::Mat img_right = cv::imread(path_right, cv::IMREAD_COLOR);
@@ -131,7 +132,9 @@ int main(int argv, char** argc)
 //    ShowDisparityMap(disparity, width, height, "disp-left");
     // 保存视差图
 
-    SaveDisparityMap(disparity, width, height, path_left);
+//    SaveDisparityMap(disparity, width, height, path_left);
+//    SaveDisparityMap16(disparity, width, height, path_left);
+    SaveDisparityMap32to16(disparity, width, height, path_left);
 
     cv::waitKey(0);
 
@@ -216,16 +219,6 @@ void SaveDisparityMap16(const float32* disp_map, const sint32& width, const sint
 {
     // 保存视差图
     cv::Mat disp_mat = cv::Mat(height, width, CV_16UC1);
-    float32 min_disp = float32(width), max_disp = -float32(width);
-    for (sint32 i = 0; i < height; i++) {
-        for (sint32 j = 0; j < width; j++) {
-            const float32 disp = abs(disp_map[i * width + j]);
-            if (disp != Invalid_Float) {
-                min_disp = std::min(min_disp, disp);
-                max_disp = std::max(max_disp, disp);
-            }
-        }
-    }
     for (sint32 i = 0; i < height; i++) {
         for (sint32 j = 0; j < width; j++) {
             const float32 disp = abs(disp_map[i * width + j]);
@@ -238,10 +231,28 @@ void SaveDisparityMap16(const float32* disp_map, const sint32& width, const sint
         }
     }
 
-    cv::imwrite(path + "-d.png", disp_mat);
-    cv::Mat disp_color;
-    applyColorMap(disp_mat, disp_color, cv::COLORMAP_JET);
-    cv::imwrite(path + "-c.png", disp_color);
+    cv::imwrite(path + "-d16uc.png", disp_mat);
+}
+void SaveDisparityMap32to16(const float32* disp_map, const sint32& width, const sint32& height, const std::string& path)
+{
+    cv::Mat disp_mat = cv::Mat(height, width, CV_32FC1);
+    // 保存视差图
+    for (sint32 i = 0; i < height; i++) {
+        for (sint32 j = 0; j < width; j++) {
+            const float32 disp = disp_map[i * width + j];
+            if (disp == Invalid_Float) {
+                disp_mat.ptr<float>(i)[j] = 0;
+            }
+            else {
+                disp_mat.ptr<float>(i)[j] = disp;
+            }
+        }
+    }
+    cv::Mat disp_mat16 = cv::Mat(height, width, CV_16UC1);
+    cv::normalize(disp_mat, disp_mat16, 0, 65535, cv::NORM_MINMAX, CV_16UC1);
+
+
+    cv::imwrite(path + "-d16uc.png", disp_mat16);
 }
 
 void SaveDisparityCloud(const uint8* img_bytes, const float32* disp_map, const sint32& width, const sint32& height, const std::string& path)
