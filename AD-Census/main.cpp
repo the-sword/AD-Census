@@ -37,16 +37,16 @@ void SaveDisparityCloud(const uint8* img_bytes, const float32* disp_map, const s
 */
 int main(int argv, char** argc)
 {
-//    if (argv < 3) {
-//        std::cout << "参数过少，请至少指定左右影像路径！" << std::endl;
-//        return -1;
-//    }
+    if (argv < 3) {
+        std::cout << "参数过少，请至少指定左右影像路径！" << std::endl;
+        return -1;
+    }
 
     printf("Image Loading...");
     //···············································································//
     // 读取影像
-    std::string path_left = "/home/em/workspace/datasets/waikuo/0927/veh-2020-09-27-16-59-09-383/rgbImageRL.png";
-    std::string path_right = "/home/em/workspace/datasets/waikuo/0927/veh-2020-09-27-16-59-09-383/rgbImageRR.png";
+    std::string path_left = argc[1];
+    std::string path_right = argc[2];
 
     cv::Mat img_left = cv::imread(path_left, cv::IMREAD_COLOR);
     cv::Mat img_right = cv::imread(path_right, cv::IMREAD_COLOR);
